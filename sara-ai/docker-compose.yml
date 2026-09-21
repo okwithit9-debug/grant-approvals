@@ -1,0 +1,70 @@
+# Open WebUI in front of a local OpenAI-compatible LLM.
+# Does not start or stop the model server.
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.11.3
+    container_name: sara-ai
+    restart: unless-stopped
+    ports:
+      - "${WEBUI_BIND:-127.0.0.1}:${WEBUI_PORT:-8080}:8080"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-http://host.docker.internal:8001/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-local-not-used}
+      DEFAULT_MODELS: ${DEFAULT_MODELS:-Qwen3.8-Flash-Next-Uncensored-exl3-4bpw}
+      DEFAULT_PINNED_MODELS: ${DEFAULT_MODELS:-Qwen3.8-Flash-Next-Uncensored-exl3-4bpw}
+      ENABLE_OLLAMA_API: "false"
+      WEBUI_NAME: ${WEBUI_NAME:-Sara AI}
+      WEBUI_URL: ${WEBUI_URL:-http://127.0.0.1:8080}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-change-me-before-phones}
+      WEBUI_AUTH: "true"
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-true}
+      ENABLE_SIGNUP_PASSWORD_CONFIRMATION: "true"
+      ENABLE_LOGIN_FORM: "true"
+      ENABLE_PASSWORD_AUTH: "true"
+      DEFAULT_USER_ROLE: user
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-http://127.0.0.1:8080}
+      ENABLE_DIRECT_CONNECTIONS: "false"
+      ENABLE_CODE_EXECUTION: "false"
+      ENABLE_CODE_INTERPRETER: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_IMAGE_GENERATION: ${ENABLE_IMAGE_GENERATION:-true}
+      IMAGE_GENERATION_ENGINE: ${IMAGE_GENERATION_ENGINE:-comfyui}
+      COMFYUI_BASE_URL: ${COMFYUI_BASE_URL:-http://host.docker.internal:8188}
+      ENABLE_COMMUNITY_SHARING: "false"
+      ENABLE_API_KEYS: "false"
+      ENABLE_CHANNELS: "false"
+      ENABLE_MEMORIES: "false"
+      ENABLE_ADMIN_ANALYTICS: "false"
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+      SAFE_MODE: "true"
+      OFFLINE_MODE: "true"
+      HF_HUB_OFFLINE: "1"
+      USER_PERMISSIONS_FEATURES_IMAGE_GENERATION: "true"
+      USER_PERMISSIONS_FEATURES_WEB_SEARCH: "false"
+      USER_PERMISSIONS_FEATURES_CODE_INTERPRETER: "false"
+      RAG_FILE_MAX_SIZE: ${RAG_FILE_MAX_SIZE:-8}
+      RAG_FILE_MAX_COUNT: ${RAG_FILE_MAX_COUNT:-4}
+      RAG_ALLOWED_FILE_EXTENSIONS: ${RAG_ALLOWED_FILE_EXTENSIONS:-jpg,jpeg,png,webp}
+    volumes:
+      - open-webui-data:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+volumes:
+  open-webui-data:

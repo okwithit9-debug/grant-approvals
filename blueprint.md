@@ -1,40 +1,44 @@
-# Blueprint — Sara AI Local Compute Node
+# Blueprint - local compute node
 
-## What runs where
+## Current (working)
 
-| Role | Hardware | Software |
-|---|---|---
-| LLM brain (text) | NVIDIA Spark (or M5 Ultra when it lands) | Qwen 3.8 Flash Next, served via Tabby/Hermes as a normal API |
-| Image gen | Mac Studio M4 Max 128GB | ComfyUI + Flux / Qwen-image |
-| Front door | Mac Studio | Open WebUI (Sara AI), Docker, Cloudflare tunnel → saraai.chat |
-| Video gen | (Phase 2) | ComfyUI video workflows |
+One NVIDIA Spark-class box serves the long-context chat model as a normal OpenAI-compatible API.
+One Apple Silicon Studio runs the front door (Open WebUI) and ComfyUI image generation.
+A smaller local model on the Studio is available as a fallback. It is not the household chat backend.
 
-## The two doors, one cluster
+```
+phones (HTTPS: tailnet or tunnel + allowlist)
+        |
+        v
+Open WebUI  (127.0.0.1:8080 on the Studio)
+        |  OpenAI-compatible
+        v
+LLM API     (private LAN, example http://LLM_LAN_IP:8001/v1)
+        model id set in .env
 
-1. **Private door** — family, unlimited, no meter. Registration gate (Cloudflare Access email allowlist + Open WebUI auth). No paywall today.
-2. **Public door** — same stack, registration-gated for strangers, future subscription + OpenRouter idle payouts.
-
-Nothing leaves the hardware unless you choose to sell idle time.
-
-## What the grant funds (Phase 1)
-
-- 10GbE networking so the boxes talk fast
-- Node-management software: dashboard, one-command setup, monitoring, failover
-- This public blueprint + installer + workflow JSONs
-- Docs and reporting overhead
-
-No new giant GPU in Phase 1. The Station-class box is Phase 2, after the loop proves itself.
-
-## Open-source boundary
-
-**Public (this repo, MIT):** interface shape, ComfyUI workflows, installer, smoke test, architecture docs.
-**Private (not here):** household accounts, keys, any future paywall logic, personal routing.
-
-## Quick start
-
-```bash
-./scripts/install.sh
-./scripts/smoke-test.sh
+Image generate:
+Open WebUI -> ComfyUI on the Studio (127.0.0.1:8188)
 ```
 
-See `scripts/install.sh` for what it pulls and starts.
+What crosses the LAN is a short request and tokens. Not a growing KV cache.
+
+## Future (documented, not required to clone)
+
+| Role | Target |
+|------|--------|
+| Brain | Larger unified-memory Mac (Flash Next class local) |
+| Images + smaller LLM | Original Studio |
+| Video | Spark + ComfyUI (CUDA) |
+
+Cluster with Thunderbolt between Macs if you later pool memory. Spark stays on Ethernet for API and video jobs.
+
+## Two doors
+
+1. Private door - named logins, no meter, allowlist.
+2. Public door - same stack, registration gate. Paid tier is future work and is not in this repo.
+
+## Public vs private
+
+**This repo:** compose, env examples, ComfyUI workflows, installer, architecture.
+
+**Not this repo:** real `.env`, tunnel tokens, family emails, private workflow Hub, agent/computer-use configs, grant application drafts, budgets with personal figures.

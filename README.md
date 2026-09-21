@@ -1,35 +1,56 @@
-# README
+# Local Compute Node (public)
 
 Open-source home AI compute node. MIT.
 
-This is the **public** half of a project applying to the Foresight Institute Local Compute grant. The private strategy, budgets, and drafts live in a separate private repo.
+This is the **public** half of a Foresight Institute Local Compute grant project. Household accounts, keys, private ops, and personal workflows live in a separate private repo and are never copied here.
+
+Live prototype (registration-gated): https://saraai.chat
 
 ## What this is
 
-A replicable blueprint for running a ChatGPT / Imagine / Sora-style stack on hardware you own:
+A replicable blueprint for a ChatGPT / Imagine-style stack on hardware you own.
 
-- **Brain:** local LLM (Qwen 3.8 Flash Next class) served as a normal API
-- **Eyes:** ComfyUI + Flux / Qwen-image for image generation
-- **Front door:** Open WebUI (Sara AI) with a registration gate — family-first, open to others behind an allowlist
-- **Installer:** one command, `scripts/install.sh`
-- **Proof it runs:** https://saraai.chat (registration-gated, live today)
+Current working split (what is running today):
 
-## Why it exists
+| Role | Typical box | Software |
+|------|-------------|----------|
+| Chat brain | NVIDIA DGX Spark (128 GB) | Qwen 3.8 Flash Next (EXL3), OpenAI-compatible API |
+| Hands / fallback LLM | Apple Mac Studio | Qwen 3.8 27B (local decode / computer-use stays off this UI) |
+| Image gen | Same Mac Studio | ComfyUI + FLUX FP8 + LoRAs, plus Qwen-Image when you add it |
+| Front door | Same Mac | Open WebUI (Sara AI), Docker, HTTPS tunnel or tailnet |
 
-Local AI stacks today are expert-only glue. This repo is the shared recipe so an average person can stand up a private node in under an hour, with a documented path to sell idle time so the box funds itself.
+Future split (when a larger Apple Ultra-class box lands):
+
+| Role | Box |
+|------|-----|
+| Chat brain | Larger Mac Studio (more unified memory) |
+| Image gen + 27B | Original Mac Studio |
+| Video gen (ComfyUI / Wan class) | Spark (CUDA) |
+
+Machines talk over a private LAN API. The KV cache does **not** ship over Ethernet. Chat is an API call: prompt in, tokens out.
 
 ## Layout
 
-- `blueprint.md` — architecture, what runs where, what stays private
-- `economics.md` — honest payback math (zero revenue today, the loop we are funding)
-- `workflows/` — ComfyUI Flux workflow JSONs (photoreal, illustrated, anime)
-- `scripts/install.sh` — one-command setup
-- `scripts/smoke-test.sh` — verifies the node is alive
+- `blueprint.md` - architecture, current vs future, public vs private boundary
+- `economics.md` - honest payback math
+- `SANITIZE.md` - what was stripped before this repo went public
+- `sara-ai/` - installable Open WebUI + ComfyUI recipe (placeholders only)
+- `workflows/` - ComfyUI Flux JSON (photoreal, illustrated, anime)
+- `scripts/install.sh` - image-backend installer
+- `scripts/smoke-test.sh` - health check
+
+## Quick start
+
+```bash
+cp sara-ai/.env.example sara-ai/.env
+# set WEBUI_SECRET_KEY and OPENAI_API_BASE_URL to YOUR LAN endpoint
+cd sara-ai && docker compose up -d
+./scripts/install.sh
+./scripts/smoke-test.sh
+```
+
+Do not commit `.env`. Do not publish the model port on the public internet.
 
 ## License
 
 MIT. See `LICENSE`.
-
-## Status
-
-Prototype stage. Working household node, open blueprint in progress. Grant-funded work ships here as it lands.
